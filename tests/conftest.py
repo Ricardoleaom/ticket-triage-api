@@ -9,10 +9,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.deps import get_classifier
 from app.core.database import Base, get_db
 from app.core.security import hash_password
 from app.main import app
 from app.models import Role, User
+from app.triage.keyword_classifier import KeywordClassifier
 from tests.utils import PASSWORD
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite://")
@@ -41,6 +43,7 @@ def db():
 @pytest.fixture
 def client(db):
     app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_classifier] = KeywordClassifier
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

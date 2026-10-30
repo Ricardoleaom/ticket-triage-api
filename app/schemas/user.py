@@ -28,5 +28,12 @@ class UserResponse(BaseModel):
     created_at: datetime
 
 
+class UserSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
 class RoleUpdate(BaseModel):
     role: Role
