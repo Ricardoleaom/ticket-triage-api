@@ -20,6 +20,7 @@ def test_open_ticket_runs_triage(client, requester):
     assert body["triage_overridden"] is False
     assert body["requester"] == {"id": requester.id, "name": requester.name}
     assert body["assignee"] is None
+    assert body["updated_at"] == body["created_at"]
 
 
 def test_ticket_is_opened_even_when_ai_is_down(client, requester):

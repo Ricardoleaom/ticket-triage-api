@@ -36,6 +36,7 @@ class TicketService:
             triage_reason=triage.reason,
             requester_id=requester.id,
             created_at=opened_at,
+            updated_at=opened_at,
             sla_due_at=calculate_sla_due_at(triage.priority, opened_at),
         )
         self.tickets.add(ticket)
