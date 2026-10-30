@@ -11,6 +11,7 @@ from app.core.security import decode_access_token
 from app.models.user import Role, User
 from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
+from app.services.report_service import ReportService
 from app.services.ticket_service import TicketService
 from app.services.user_service import UserService
 from app.triage.base import Classifier
@@ -71,6 +72,11 @@ def get_ticket_service(
     return TicketService(db, classifier)
 
 
+def get_report_service(db: DbSession) -> ReportService:
+    return ReportService(db)
+
+
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 TicketServiceDep = Annotated[TicketService, Depends(get_ticket_service)]
+ReportServiceDep = Annotated[ReportService, Depends(get_report_service)]

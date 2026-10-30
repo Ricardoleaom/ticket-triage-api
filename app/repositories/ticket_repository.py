@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.ticket import ACTIVE_STATUSES, Ticket
+from app.models.ticket import ACTIVE_STATUSES, Ticket, TicketPriority, TicketStatus
 from app.schemas.ticket import TicketFilters
 
 
@@ -33,6 +33,27 @@ class TicketRepository:
         )
         return list(self.db.scalars(query)), total or 0
 
+    def count_by_status(self) -> dict[TicketStatus, int]:
+        rows = self.db.execute(select(Ticket.status, func.count()).group_by(Ticket.status))
+        return {status: total for status, total in rows}
+
+    def count_by_priority(self) -> dict[TicketPriority, int]:
+        rows = self.db.execute(select(Ticket.priority, func.count()).group_by(Ticket.priority))
+        return {priority: total for priority, total in rows}
+
+    def count_overdue(self, now: datetime) -> int:
+        query = select(func.count()).select_from(Ticket).where(*overdue_conditions(now))
+        return self.db.scalar(query) or 0
+
+    def count_resolved(self) -> tuple[int, int]:
+        resolved = select(func.count()).select_from(Ticket).where(Ticket.resolved_at.is_not(None))
+        resolved_within_sla = resolved.where(Ticket.resolved_at <= Ticket.sla_due_at)
+        return self.db.scalar(resolved) or 0, self.db.scalar(resolved_within_sla) or 0
+
+    def count_triage_overridden(self) -> int:
+        query = select(func.count()).select_from(Ticket).where(Ticket.triage_overridden.is_(True))
+        return self.db.scalar(query) or 0
+
     @staticmethod
     def _build_conditions(
         filters: TicketFilters, requester_id: int | None
@@ -49,6 +70,9 @@ class TicketRepository:
         if filters.assignee_id is not None:
             conditions.append(Ticket.assignee_id == filters.assignee_id)
         if filters.overdue:
-            conditions.append(Ticket.status.in_(ACTIVE_STATUSES))
-            conditions.append(Ticket.sla_due_at < datetime.now(UTC))
+            conditions.extend(overdue_conditions(datetime.now(UTC)))
         return conditions
+
+
+def overdue_conditions(now: datetime) -> list[ColumnElement[bool]]:
+    return [Ticket.status.in_(ACTIVE_STATUSES), Ticket.sla_due_at < now]
