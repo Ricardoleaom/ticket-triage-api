@@ -17,7 +17,7 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg://tickets:tickets@db:5432/tickets
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-troque-esta-chave-antes-de-ir-para-producao}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?defina JWT_SECRET_KEY no arquivo .env}
       TRIAGE_PROVIDER: ${TRIAGE_PROVIDER:-keywords}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
