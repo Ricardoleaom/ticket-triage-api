@@ -1,7 +1,13 @@
 from app.core.security import create_access_token
 from app.models import User
+from app.triage.base import Classifier, TriageError, TriageResult
 
 PASSWORD = "senha-segura-123"
+
+
+class UnavailableClassifier(Classifier):
+    def classify(self, title: str, description: str) -> TriageResult:
+        raise TriageError("API fora do ar")
 
 
 def auth_headers(user: User) -> dict[str, str]:

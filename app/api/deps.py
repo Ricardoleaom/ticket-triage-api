@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import Role, User
@@ -13,7 +14,7 @@ from app.services.auth_service import AuthService
 from app.services.ticket_service import TicketService
 from app.services.user_service import UserService
 from app.triage.base import Classifier
-from app.triage.keyword_classifier import KeywordClassifier
+from app.triage.factory import build_classifier
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -53,7 +54,7 @@ AdminUser = Annotated[User, Depends(require_admin)]
 
 @lru_cache
 def get_classifier() -> Classifier:
-    return KeywordClassifier()
+    return build_classifier(settings)
 
 
 def get_auth_service(db: DbSession) -> AuthService:

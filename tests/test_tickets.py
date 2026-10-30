@@ -1,7 +1,11 @@
 from datetime import UTC, datetime, timedelta
 
+from app.api.deps import get_classifier
+from app.main import app
 from app.models import Ticket
-from tests.utils import auth_headers, open_ticket
+from app.triage.fallback_classifier import FallbackClassifier
+from app.triage.keyword_classifier import KeywordClassifier
+from tests.utils import UnavailableClassifier, auth_headers, open_ticket
 
 
 def test_open_ticket_runs_triage(client, requester):
@@ -16,6 +20,17 @@ def test_open_ticket_runs_triage(client, requester):
     assert body["triage_overridden"] is False
     assert body["requester"] == {"id": requester.id, "name": requester.name}
     assert body["assignee"] is None
+
+
+def test_ticket_is_opened_even_when_ai_is_down(client, requester):
+    app.dependency_overrides[get_classifier] = lambda: FallbackClassifier(
+        primary=UnavailableClassifier(), fallback=KeywordClassifier()
+    )
+
+    response = open_ticket(client, requester)
+
+    assert response.status_code == 201
+    assert response.json()["triage_source"] == "keywords"
 
 
 def test_sla_is_calculated_from_priority(client, requester):
